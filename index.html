@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1117">
+<title>Painel Financeiro</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161922;
+  --bg3: #1e2230;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f0f0;
+  --text2: #8a8f9e;
+  --text3: #4a4f5e;
+  --green: #00c98d;
+  --green-dim: rgba(0,201,141,0.12);
+  --red: #ff5757;
+  --red-dim: rgba(255,87,87,0.12);
+  --amber: #f5a623;
+  --amber-dim: rgba(245,166,35,0.12);
+  --blue: #4d9fff;
+  --blue-dim: rgba(77,159,255,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --font: 'Sora', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --r: 10px;
+  --r2: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; min-height: 100vh; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* LAYOUT */
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.main { flex: 1; padding: 28px; overflow-x: hidden; }
+
+/* SIDEBAR */
+.logo { padding: 22px 18px 16px; border-bottom: 1px solid var(--border); }
+.logo-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -.3px; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+.nav-section { padding: 18px 18px 6px; font-size: 10px; font-weight: 500; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; margin: 2px 8px; border-radius: var(--r); cursor: pointer; color: var(--text2); font-size: 13px; transition: all .15s; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.on { background: var(--bg3); color: var(--text); font-weight: 500; }
+.nav-item .icon { font-size: 15px; flex-shrink: 0; opacity: .7; }
+.nav-item.on .icon { opacity: 1; }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-left: auto; }
+.sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border); }
+.sync-btn { width: 100%; padding: 9px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all .15s; }
+.sync-btn:hover { border-color: var(--green); color: var(--green); }
+
+/* TELAS */
+.tela { display: none; } .tela.on { display: block; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+.page-title { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -.4px; }
+.page-sub { font-size: 12px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+.month-tabs { display: flex; gap: 4px; }
+.mtab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: var(--font); font-size: 12px; cursor: pointer; transition: all .15s; }
+.mtab:hover { border-color: var(--border2); color: var(--text); }
+.mtab.on { background: var(--bg3); border-color: var(--border2); color: var(--text); font-weight: 500; }
+
+/* METRICS */
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
+.metrics-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 14px 16px; }
+.metric-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.metric-val { font-size: 22px; font-weight: 600; color: var(--text); font-family: var(--mono); letter-spacing: -.5px; }
+.metric-delta { font-size: 11px; margin-top: 4px; font-family: var(--mono); }
+.up { color: var(--green); } .down { color: var(--red); } .warn { color: var(--amber); }
+
+/* CARDS */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 16px; margin-bottom: 14px; }
+.card-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.card-title span { color: var(--text2); }
+.two-col { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; margin-bottom: 14px; }
+
+/* ALERT BANNERS */
+.alert { border-radius: var(--r); padding: 10px 14px; font-size: 12px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; line-height: 1.5; }
+.alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.alert-red { background: var(--red-dim); border: 1px solid rgba(255,87,87,0.2); color: #ff8080; }
+.alert-amber { background: var(--amber-dim); border: 1px solid rgba(245,166,35,0.2); color: #f5c870; }
+.alert-green { background: var(--green-dim); border: 1px solid rgba(0,201,141,0.2); color: #4dd9a8; }
+
+/* BAR ROWS */
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bar-row:last-child { margin-bottom: 0; }
+.bar-nome { font-size: 12px; color: var(--text2); min-width: 120px; }
+.bar-bg { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 5px; border-radius: 3px; transition: width .6s ease; }
+.bar-pct { font-size: 12px; font-weight: 500; min-width: 36px; text-align: right; font-family: var(--mono); }
+.bar-val { font-size: 11px; color: var(--text3); min-width: 84px; text-align: right; font-family: var(--mono); }
+
+/* TX ROWS */
+.tx-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); gap: 8px; }
+.tx-row:last-child { border-bottom: none; }
+.tx-desc { font-size: 13px; color: var(--text); }
+.tx-meta { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.tx-warn-label { font-size: 11px; color: var(--amber); margin-top: 2px; }
+.tx-out { font-size: 13px; font-weight: 500; color: var(--red); font-family: var(--mono); white-space: nowrap; }
+.tx-in { font-size: 13px; font-weight: 500; color: var(--green); font-family: var(--mono); white-space: nowrap; }
+.tx-pending { font-size: 13px; font-weight: 500; color: var(--amber); font-family: var(--mono); white-space: nowrap; }
+.btn-xs { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; font-family: var(--font); white-space: nowrap; transition: all .15s; }
+.btn-xs:hover { border-color: var(--green); color: var(--green); }
+
+/* BADGES */
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; white-space: nowrap; font-family: var(--mono); }
+.b-emp { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(77,159,255,0.2); }
+.b-pes { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.b-ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,201,141,0.2); }
+.b-warn { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.b-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,87,87,0.2); }
+.b-pro { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+
+/* DIVIDER */
+.divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.result-label { font-size: 13px; color: var(--text2); }
+.result-val { font-size: 14px; font-weight: 600; font-family: var(--mono); }
+
+/* UPLOAD */
+.upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--r2); padding: 32px; text-align: center; cursor: pointer; margin-bottom: 14px; transition: all .2s; }
+.upload-zone:hover { border-color: var(--green); background: var(--green-dim); }
+.upload-icon { font-size: 32px; color: var(--text3); margin-bottom: 10px; }
+.upload-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--text3); }
+#file-input { display: none; }
+.upload-processing { display: none; align-items: center; justify-content: center; gap: 10px; padding: 16px; font-size: 13px; color: var(--green); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--green-dim); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+
+/* CATEGORIAS */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.tab-btn { font-size: 13px; padding: 8px 16px; cursor: pointer; border: none; background: transparent; color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: var(--font); transition: all .15s; }
+.tab-btn.on { color: var(--text); border-bottom-color: var(--green); }
+.cat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cat-row:last-child { border-bottom: none; }
+.cat-nome { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
+.cat-pill { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.cat-rule { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.cat-actions { display: flex; align-items: center; gap: 8px; }
+.add-cat-form { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--r); padding: 14px; margin-bottom: 14px; display: none; }
+.add-cat-form.show { display: block; }
+.form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+input[type=text], select { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r); padding: 8px 12px; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: border-color .15s; }
+input[type=text]:focus, select:focus { border-color: var(--green); }
+input[type=text] { flex: 1; }
+select { background: var(--bg2); cursor: pointer; }
+.btn-primary { padding: 8px 16px; background: var(--green); border: none; border-radius: var(--r); color: #0f1117; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.btn-primary:hover { opacity: .85; }
+.btn-ghost { padding: 8px 14px; background: transparent; border: 1px solid var(--border2); border-radius: var(--r); color: var(--text2); font-family: var(--font); font-size: 13px; cursor: pointer; transition: all .15s; }
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+
+/* SALDO BLUR */
+.blur-val { filter: blur(6px); transition: filter .2s; cursor: pointer; user-select: none; }
+.blur-val:hover { filter: none; }
+.blur-hint { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+
+/* CONFIG */
+.config-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.config-row:last-child { border-bottom: none; }
+.config-label { font-size: 13px; color: var(--text); }
+.config-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.toggle { width: 36px; height: 20px; background: var(--bg3); border-radius: 10px; position: relative; cursor: pointer; border: 1px solid var(--border2); transition: background .2s; flex-shrink: 0; }
+.toggle.on { background: var(--green); border-color: var(--green); }
+.toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--text3); border-radius: 50%; transition: all .2s; }
+.toggle.on .toggle-knob { left: 18px; background: #0f1117; }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .sidebar { width: 56px; }
+  .nav-item span, .logo-sub, .logo-name, .nav-section, .sidebar-footer .sync-btn span { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .main { padding: 16px; }
+  .metrics { grid-template-columns: repeat(2,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .metrics-3 { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Painel</div>
+    <div class="logo-sub">corretora · pessoal</div>
+  </div>
+
+  <div class="nav-section">Empresa</div>
+  <div class="nav-item on" onclick="go('visao-geral',this)">
+    <span class="icon">⊞</span><span>Visão geral</span>
+  </div>
+  <div class="nav-item" onclick="go('receita',this)">
+    <span class="icon">↑</span><span>Receita</span>
+    <span class="nav-dot" style="background:var(--green)"></span>
+  </div>
+  <div class="nav-item" onclick="go('despesas',this)">
+    <span class="icon">↓</span><span>Despesas</span>
+  </div>
+
+  <div class="nav-section">Pessoal</div>
+  <div class="nav-item" onclick="go('pessoal',this)">
+    <span class="icon">◎</span><span>Gastos pessoais</span>
+  </div>
+
+  <div class="nav-section">Ferramentas</div>
+  <div class="nav-item" onclick="go('importar',this)">
+    <span class="icon">↥</span><span>Importar extrato</span>
+    <span class="nav-dot" style="background:var(--amber)"></span>
+  </div>
+  <div class="nav-item" onclick="go('categorias',this)">
+    <span class="icon">◈</span><span>Categorias</span>
+  </div>
+  <div class="nav-item" onclick="go('configuracoes',this)">
+    <span class="icon">⚙</span><span>Configurações</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="sync-btn" onclick="simularSync()">
+      <span id="sync-icon">↻</span>
+      <span>Sincronizar</span>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ══════════════════ VISÃO GERAL ══════════════════ -->
+<div class="tela on" id="tela-visao-geral">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Visão geral</div>
+      <div class="page-sub" id="vg-sub">maio 2025 · sicoob + btg</div>
+    </div>
+    <div class="month-tabs">
+      <button class="mtab on" onclick="setMesGlobal('mai',this)">Mai</button>
+      <button class="mtab" onclick="setMesGlobal('abr',this)">Abr</button>
+      <button class="mtab" onclick="setMesGlobal('mar',this)">Mar</button>
+    </div>
+  </div>
+
+  <div id="vg-alertas"></div>
+
+  <div class="metrics" id="vg-metrics"></div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">↑ receita — seguradoras</div>
+      <div id="vg-receita-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">↓ despesas — empresa</div>
+      <div id="vg-despesa-bars"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">◎ gargalos pessoais · btg</div>
+    <div id="vg-pessoal-bars"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ RECEITA ══════════════════ -->
+<div class="tela" id="tela-receita">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Receita</div>
+      <div class="page-sub">comissões por seguradora · sicoob</div>
+    </div>
+    <div class="month-tabs">
+      <button class="mtab on" onclick="setMesReceita('mai',this)">Mai</button>
+      <button class="mtab" onclick="setMesReceita('abr',this)">Abr</button>
+      <button class="mtab" onclick="setMesReceita('mar',this)">Mar</button>
+    </div>
+  </div>
+  <div class="metrics metrics-3" id="rec-metrics"></div>
+  <div id="rec-alertas"></div>
+  <div class="card">
+    <div class="card-title">comissões recebidas</div>
+    <div id="rec-bars"></div>
+    <div class="divider"></div>
+    <div class="result-row">
+      <span class="result-label">Total</span>
+      <span class="result-val up" id="rec-total"></span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">variação vs mês anterior</div>
+    <div id="rec-variacao"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ DESPESAS ══════════════════ -->
+<div class="tela" id="tela-despesas">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Despesas</div>
+      <div class="page-sub">saídas por categoria · sicoob</div>
+    </div>
+    <div class="month-tabs">
+      <button class="mtab on" onclick="setMesDespesa('mai',this)">Mai</button>
+      <button class="mtab" onclick="setMesDespesa('abr',this)">Abr</button>
+      <button class="mtab" onclick="setMesDespesa('mar',this)">Mar</button>
+    </div>
+  </div>
+  <div class="metrics metrics-3" id="desp-metrics"></div>
+  <div class="card">
+    <div class="card-title">por categoria — % da receita</div>
+    <div id="desp-bars"></div>
+    <div class="divider"></div>
+    <div id="desp-resultado"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">últimas transações</div>
+    <div id="desp-txs"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ PESSOAL ══════════════════ -->
+<div class="tela" id="tela-pessoal">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Gastos pessoais</div>
+      <div class="page-sub">gargalos · btg</div>
+    </div>
+    <div class="month-tabs">
+      <button class="mtab on" onclick="setMesPessoal('mai',this)">Mai</button>
+      <button class="mtab" onclick="setMesPessoal('abr',this)">Abr</button>
+      <button class="mtab" onclick="setMesPessoal('mar',this)">Mar</button>
+    </div>
+  </div>
+  <div class="metrics metrics-3" id="pes-metrics"></div>
+  <div id="pes-alertas"></div>
+  <div class="card">
+    <div class="card-title">por categoria — % da renda</div>
+    <div id="pes-bars"></div>
+    <div class="divider"></div>
+    <div id="pes-resultado"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">últimas transações · btg</div>
+    <div id="pes-txs"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ IMPORTAR ══════════════════ -->
+<div class="tela" id="tela-importar">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Importar extrato</div>
+      <div class="page-sub">ofx ou csv · sicoob e btg · duplicatas detectadas automaticamente</div>
+    </div>
+  </div>
+
+  <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">⬆</div>
+    <div class="upload-title">Arraste o arquivo aqui ou clique para selecionar</div>
+    <div class="upload-sub">OFX ou CSV · Sicoob (empresa) · BTG (pessoal) · pode subir várias vezes</div>
+  </div>
+  <input type="file" id="file-input" accept=".ofx,.csv" onchange="processarUpload(this)">
+  <div class="upload-processing" id="upload-proc">
+    <div class="spinner"></div>
+    <span id="proc-msg">Lendo arquivo e classificando com IA...</span>
+  </div>
+
+  <div id="upload-result" style="display:none;" class="alert alert-green">
+    <span class="alert-icon">✓</span>
+    <span id="upload-result-msg"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">histórico de uploads</div>
+    <div class="tx-row">
+      <div><div class="tx-desc">sicoob_maio_2025.ofx</div><div class="tx-meta">247 transações · hoje 08:42 · 0 duplicatas</div></div>
+      <span class="badge b-emp">empresa</span>
+    </div>
+    <div class="tx-row">
+      <div><div class="tx-desc">btg_mai01_15.csv</div><div class="tx-meta">89 transações · 15 mai · 3 duplicatas ignoradas</div></div>
+      <span class="badge b-pes">pessoal</span>
+    </div>
+    <div class="tx-row">
+      <div><div class="tx-desc">sicoob_abril_completo.ofx</div><div class="tx-meta">231 transações · 01 mai · 0 duplicatas</div></div>
+      <span class="badge b-emp">empresa</span>
+    </div>
+    <div class="tx-row">
+      <div><div class="tx-desc">btg_abril_completo.ofx</div><div class="tx-meta">198 transações · 01 mai · 1 duplicata ignorada</div></div>
+      <span class="badge b-pes">pessoal</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚠ pendentes de classificação · <span>3 itens</span></div>
+    <div class="tx-row">
+      <div>
+        <div class="tx-desc">TED R$ 4.100 — PIX NOME PROPRIO</div>
+        <div class="tx-warn-label">↳ Pró-labore detectado automaticamente</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge b-pro">pró-labore</span>
+        <button class="btn-xs" onclick="confirmarClassificacao(this,'Pró-labore')">Confirmar</button>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div>
+        <div class="tx-desc">TED R$ 2.300 — origem PJ desconhecida</div>
+        <div class="tx-warn-label">↳ Provável: comissão Mapfre</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select onchange="" style="font-size:11px;padding:4px 8px;">
+          <option>Comissão seguradora</option>
+          <option>Pró-labore</option>
+          <option>Outra receita</option>
+        </select>
+        <button class="btn-xs" onclick="confirmarClassificacao(this,'Comissão seguradora')">OK</button>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div>
+        <div class="tx-desc">Débito R$ 740 — desc. abreviada</div>
+        <div class="tx-warn-label">↳ Provável: Seguros</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select style="font-size:11px;padding:4px 8px;">
+          <option>Seguros</option>
+          <option>Contabilidade</option>
+          <option>Impostos</option>
+          <option>Outros</option>
+        </select>
+        <button class="btn-xs" onclick="confirmarClassificacao(this,'Seguros')">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CATEGORIAS ══════════════════ -->
+<div class="tela" id="tela-categorias">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Categorias</div>
+      <div class="page-sub">empresa e pessoal · regras de classificação automática</div>
+    </div>
+    <button class="btn-primary" onclick="toggleAddCat()">+ Nova categoria</button>
+  </div>
+
+  <div class="add-cat-form" id="add-cat-form">
+    <div class="form-row">
+      <input type="text" id="new-cat-nome" placeholder="Nome da categoria (ex: Plano de saúde)">
+      <select id="new-cat-tipo">
+        <option value="empresa-desp">Empresa — despesa</option>
+        <option value="empresa-rec">Empresa — receita</option>
+        <option value="pessoal">Pessoal</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input type="text" id="new-cat-regra" placeholder="Regra IA: se descrição contiver... (ex: DARF, SICOOB SEG)">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-primary" onclick="adicionarCategoria()">Salvar</button>
+      <button class="btn-ghost" onclick="toggleAddCat()">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn on" onclick="switchCatTab(this,'cat-emp')">Empresa</button>
+    <button class="tab-btn" onclick="switchCatTab(this,'cat-pes')">Pessoal</button>
+  </div>
+
+  <div id="cat-emp">
+    <div class="card">
+      <div class="card-title">receita</div>
+      <div id="list-cat-emp-rec"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">despesas</div>
+      <div id="list-cat-emp-desp"></div>
+    </div>
+  </div>
+
+  <div id="cat-pes" style="display:none;">
+    <div class="card">
+      <div class="card-title">categorias pessoais</div>
+      <div id="list-cat-pes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CONFIGURAÇÕES ══════════════════ -->
+<div class="tela" id="tela-configuracoes">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Configurações</div>
+      <div class="page-sub">contas, api e preferências</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">contas bancárias</div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Sicoob — conta corrente empresa</div>
+        <div class="config-sub">Arquivos OFX/CSV identificados automaticamente</div>
+      </div>
+      <span class="badge b-ok">ativo</span>
+    </div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">BTG Pactual — conta pessoal</div>
+        <div class="config-sub">Arquivos OFX/CSV identificados automaticamente</div>
+      </div>
+      <span class="badge b-ok">ativo</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">regra de pró-labore</div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">PIX para seu nome → Pró-labore</div>
+        <div class="config-sub">Todo Pix recebido com seu nome na descrição é classificado como pró-labore automaticamente</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Nome para identificação</div>
+        <div class="config-sub">Usado para detectar pró-labore nos extratos</div>
+      </div>
+      <input type="text" value="SEU NOME" style="width:180px;font-size:12px;padding:6px 10px;">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">inteligência artificial</div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Classificação automática com IA</div>
+        <div class="config-sub">OpenAI GPT-4o mini · usa seus créditos existentes</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Chave de API OpenAI</div>
+        <div class="config-sub">Cole sua chave existente — não é necessário criar nova</div>
+      </div>
+      <input type="password" value="sk-••••••••••••••••" style="width:200px;font-size:12px;padding:6px 10px;">
+    </div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Resumo mensal automático</div>
+        <div class="config-sub">Análise de gargalos em linguagem natural no dia 1 de cada mês</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">alertas</div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Alerta de concentração de receita</div>
+        <div class="config-sub">Avisa quando uma seguradora passa de 30% da receita</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">Alerta de gargalo pessoal</div>
+        <div class="config-sub">Avisa quando delivery + compras online passam de 20% da renda</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">sobre</div>
+    <div class="config-row">
+      <div class="config-label">Versão</div>
+      <span style="font-size:12px;color:var(--text3);font-family:var(--mono);">1.0.0</span>
+    </div>
+    <div class="config-row">
+      <div class="config-label">Stack</div>
+      <span style="font-size:12px;color:var(--text3);font-family:var(--mono);">Next.js · Supabase · OpenAI</span>
+    </div>
+    <div class="config-row">
+      <div class="config-label">Custo estimado IA</div>
+      <span style="font-size:12px;color:var(--green);font-family:var(--mono);">~US$ 0,30/mês</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ══════════ DADOS ══════════
+const dados = {
+  mai: {
+    receita: 38000,
+    prolabore: 4100,
+    seguradoras: [
+      { nome:'Porto Seguro',    val:12800, ant:11200 },
+      { nome:'Bradesco Seguros',val:8400,  ant:9100  },
+      { nome:'SulAmérica',      val:6200,  ant:5800  },
+      { nome:'Allianz',         val:4900,  ant:4900  },
+      { nome:'Tokio Marine',    val:3800,  ant:2900  },
+      { nome:'Liberty',         val:1900,  ant:2400  },
+    ],
+    despesas: [
+      { nome:'Impostos',         val:8500, cor:'#ff5757' },
+      { nome:'Repasse parceiros',val:7200, cor:'#ff5757' },
+      { nome:'Repasse vendedor', val:5400, cor:'#f5a623' },
+      { nome:'Pró-labore',       val:4100, cor:'#a78bfa' },
+      { nome:'Contabilidade',    val:1800, cor:'#8a8f9e' },
+      { nome:'Seguros',          val:980,  cor:'#8a8f9e' },
+      { nome:'Plano de telefone',val:420,  cor:'#8a8f9e' },
+    ],
+    pessoalRenda: 12000,
+    pessoal: [
+      { nome:'Moradia',        val:3500, cor:'#ff5757' },
+      { nome:'Supermercado',   val:2200, cor:'#f5a623' },
+      { nome:'Delivery',       val:1450, cor:'#f5a623' },
+      { nome:'Compras online', val:1100, cor:'#f5a623' },
+      { nome:'Transporte',     val:820,  cor:'#8a8f9e' },
+      { nome:'Saúde',          val:540,  cor:'#8a8f9e' },
+      { nome:'Assinaturas',    val:280,  cor:'#8a8f9e' },
+    ],
+    txsEmpresa: [
+      { desc:'TED — Porto Seguro Brasil',  cat:'Comissão seguradora', val:12800, tipo:'in' },
+      { desc:'DARF — Simples Nacional',    cat:'Impostos',            val:3240,  tipo:'out' },
+      { desc:'Repasse Parceiro Sul',       cat:'Repasse parceiros',   val:5400,  tipo:'out' },
+      { desc:'PIX — NOME PROPRIO',         cat:'Pró-labore',          val:4100,  tipo:'prolabore' },
+      { desc:'Honorários Contabilidade',   cat:'Contabilidade',       val:1800,  tipo:'out' },
+      { desc:'Débito desc. abreviada',     cat:'Pendente',            val:740,   tipo:'pending' },
+    ],
+    txsPessoal: [
+      { desc:'Supermercado BH',    cat:'Supermercado · ontem',   val:430,  tipo:'out' },
+      { desc:'iFood',              cat:'Delivery · ontem',       val:87,   tipo:'out' },
+      { desc:'Posto combustível',  cat:'Transporte · ontem',     val:280,  tipo:'out' },
+      { desc:'Farmácia',           cat:'Saúde · hoje',           val:95,   tipo:'out' },
+      { desc:'Compra online',      cat:'Pendente',               val:210,  tipo:'pending' },
+    ],
+  },
+  abr: {
+    receita: 34000, prolabore: 3800,
+    seguradoras: [
+      { nome:'Porto Seguro',    val:11200, ant:13000 },
+      { nome:'Bradesco Seguros',val:9100,  ant:8200  },
+      { nome:'SulAmérica',      val:5800,  ant:5400  },
+      { nome:'Allianz',         val:4900,  ant:4600  },
+      { nome:'Tokio Marine',    val:2900,  ant:3100  },
+      { nome:'Liberty',         val:2400,  ant:2200  },
+    ],
+    despesas: [
+      { nome:'Impostos',         val:7600, cor:'#ff5757' },
+      { nome:'Repasse parceiros',val:6800, cor:'#ff5757' },
+      { nome:'Repasse vendedor', val:4900, cor:'#f5a623' },
+      { nome:'Pró-labore',       val:3800, cor:'#a78bfa' },
+      { nome:'Contabilidade',    val:1800, cor:'#8a8f9e' },
+      { nome:'Seguros',          val:980,  cor:'#8a8f9e' },
+      { nome:'Plano de telefone',val:420,  cor:'#8a8f9e' },
+    ],
+    pessoalRenda: 11000,
+    pessoal: [
+      { nome:'Moradia',        val:3500, cor:'#ff5757' },
+      { nome:'Supermercado',   val:1900, cor:'#f5a623' },
+      { nome:'Delivery',       val:980,  cor:'#8a8f9e' },
+      { nome:'Compras online', val:740,  cor:'#8a8f9e' },
+      { nome:'Transporte',     val:750,  cor:'#8a8f9e' },
+      { nome:'Saúde',          val:390,  cor:'#8a8f9e' },
+      { nome:'Assinaturas',    val:280,  cor:'#8a8f9e' },
+    ],
+    txsEmpresa: [
+      { desc:'TED — Bradesco Seguros', cat:'Comissão seguradora', val:9100, tipo:'in' },
+      { desc:'DARF — Simples',         cat:'Impostos',            val:2900, tipo:'out' },
+      { desc:'PIX — NOME PROPRIO',     cat:'Pró-labore',          val:3800, tipo:'prolabore' },
+    ],
+    txsPessoal: [
+      { desc:'Supermercado', cat:'Supermercado', val:380, tipo:'out' },
+      { desc:'Farmácia',     cat:'Saúde',        val:120, tipo:'out' },
+    ],
+  },
+  mar: {
+    receita: 41000, prolabore: 4500,
+    seguradoras: [
+      { nome:'Porto Seguro',    val:13000, ant:10800 },
+      { nome:'Bradesco Seguros',val:8200,  ant:7900  },
+      { nome:'SulAmérica',      val:5400,  ant:5100  },
+      { nome:'Allianz',         val:4600,  ant:4200  },
+      { nome:'Tokio Marine',    val:3100,  ant:2800  },
+      { nome:'Liberty',         val:2200,  ant:2000  },
+    ],
+    despesas: [
+      { nome:'Impostos',         val:9200, cor:'#ff5757' },
+      { nome:'Repasse parceiros',val:8100, cor:'#ff5757' },
+      { nome:'Repasse vendedor', val:5800, cor:'#f5a623' },
+      { nome:'Pró-labore',       val:4500, cor:'#a78bfa' },
+      { nome:'Contabilidade',    val:1800, cor:'#8a8f9e' },
+      { nome:'Seguros',          val:980,  cor:'#8a8f9e' },
+      { nome:'Plano de telefone',val:420,  cor:'#8a8f9e' },
+    ],
+    pessoalRenda: 13000,
+    pessoal: [
+      { nome:'Moradia',        val:3500, cor:'#ff5757' },
+      { nome:'Supermercado',   val:2400, cor:'#f5a623' },
+      { nome:'Delivery',       val:1800, cor:'#ff5757' },
+      { nome:'Compras online', val:1950, cor:'#ff5757' },
+      { nome:'Transporte',     val:900,  cor:'#8a8f9e' },
+      { nome:'Saúde',          val:420,  cor:'#8a8f9e' },
+      { nome:'Assinaturas',    val:280,  cor:'#8a8f9e' },
+    ],
+    txsEmpresa: [
+      { desc:'TED — SulAmérica',   cat:'Comissão seguradora', val:5400, tipo:'in' },
+      { desc:'PIX — NOME PROPRIO', cat:'Pró-labore',          val:4500, tipo:'prolabore' },
+      { desc:'DARF — Simples',     cat:'Impostos',            val:3100, tipo:'out' },
+    ],
+    txsPessoal: [
+      { desc:'Supermercado',   cat:'Supermercado', val:620, tipo:'out' },
+      { desc:'iFood',          cat:'Delivery',     val:340, tipo:'out' },
+      { desc:'Compra online',  cat:'Compras',      val:480, tipo:'out' },
+    ],
+  },
+};
+
+const mesesNome = { mai:'maio 2025', abr:'abril 2025', mar:'março 2025' };
+let mesAtual = 'mai';
+
+// ══════════ UTILS ══════════
+function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+function pct(v, total) { return ((v/total)*100).toFixed(1) + '%'; }
+function pctNum(v, total) { return (v/total)*100; }
+
+function barColor(p) {
+  if (p >= 25) return '#ff5757';
+  if (p >= 15) return '#f5a623';
+  return '#8a8f9e';
+}
+
+function renderBars(itens, total, containerId, maxOverride) {
+  const maxVal = maxOverride || Math.max(...itens.map(i=>i.val));
+  let html = '';
+  itens.forEach(it => {
+    const p = pctNum(it.val, total);
+    const w = (it.val/maxVal*100).toFixed(1);
+    const cor = it.cor || (it.nome==='Pró-labore' ? '#a78bfa' : barColor(p));
+    const pctColor = cor === '#8a8f9e' ? 'var(--text3)' : cor;
+    html += `<div class="bar-row">
+      <span class="bar-nome">${it.nome}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${w}%;background:${cor};"></div></div>
+      <span class="bar-pct" style="color:${pctColor};">${p.toFixed(1)}%</span>
+      <span class="bar-val">${fmt(it.val)}</span>
+    </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+
+// ══════════ VISÃO GERAL ══════════
+function renderVG(mes) {
+  const d = dados[mes];
+  const totalDesp = d.despesas.reduce((s,i)=>s+i.val,0);
+  const margem = d.receita - totalDesp;
+  const totalPes = d.pessoal.reduce((s,i)=>s+i.val,0);
+  const sobraPes = d.pessoalRenda - totalPes;
+
+  document.getElementById('vg-sub').textContent = mesesNome[mes] + ' · sicoob + btg';
+
+  // alertas
+  const porto = d.seguradoras[0];
+  const portoPct = pctNum(porto.val, d.receita);
+  const delivComp = (d.pessoal.find(i=>i.nome==='Delivery')?.val||0) + (d.pessoal.find(i=>i.nome==='Compras online')?.val||0);
+  const delivPct = pctNum(delivComp, d.pessoalRenda);
+  let alertas = '';
+  if (portoPct > 30) alertas += `<div class="alert alert-red"><span class="alert-icon">⚠</span><span>${porto.nome} representa ${portoPct.toFixed(0)}% da receita — concentração alta.</span></div>`;
+  if (delivPct > 20) alertas += `<div class="alert alert-amber"><span class="alert-icon">◎</span><span>Delivery + compras online somam ${delivPct.toFixed(0)}% da renda pessoal.</span></div>`;
+  if (margem > 0) alertas += `<div class="alert alert-green"><span class="alert-icon">✓</span><span>Margem líquida empresa: ${pct(margem, d.receita)} · ${fmt(margem)}</span></div>`;
+  document.getElementById('vg-alertas').innerHTML = alertas;
+
+  // metrics
+  document.getElementById('vg-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Receita empresa</div><div class="metric-val blur-val" title="passe o mouse">${fmt(d.receita)}</div><div class="blur-hint">passe o mouse</div></div>
+    <div class="metric"><div class="metric-label">Despesas empresa</div><div class="metric-val">${fmt(totalDesp)}</div><div class="metric-delta ${totalDesp/d.receita>0.6?'down':'warn'}">${pct(totalDesp,d.receita)} da receita</div></div>
+    <div class="metric"><div class="metric-label">Margem líquida</div><div class="metric-val up blur-val" title="passe o mouse">${fmt(margem)}</div><div class="blur-hint">passe o mouse</div></div>
+    <div class="metric"><div class="metric-label">Sobra pessoal</div><div class="metric-val ${sobraPes>=0?'up':'down'} blur-val" title="passe o mouse">${fmt(sobraPes)}</div><div class="blur-hint">passe o mouse</div></div>`;
+
+  // bars
+  const topSeg = d.seguradoras.slice(0,4);
+  renderBars(topSeg.map(s=>({nome:s.nome,val:s.val,cor:'#00c98d'})), d.receita, 'vg-receita-bars');
+  renderBars(d.despesas.slice(0,4), d.receita, 'vg-despesa-bars');
+  renderBars(d.pessoal.slice(0,4), d.pessoalRenda, 'vg-pessoal-bars');
+}
+
+// ══════════ RECEITA ══════════
+function renderReceita(mes) {
+  const d = dados[mes];
+  const total = d.seguradoras.reduce((s,i)=>s+i.val,0);
+  const maior = d.seguradoras[0];
+  const maiorP = pctNum(maior.val,total);
+
+  document.getElementById('rec-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total comissões</div><div class="metric-val up blur-val">${fmt(total)}</div><div class="blur-hint">passe o mouse</div></div>
+    <div class="metric"><div class="metric-label">Seguradoras ativas</div><div class="metric-val">${d.seguradoras.length}</div></div>
+    <div class="metric"><div class="metric-label">Maior concentração</div><div class="metric-val ${maiorP>30?'down':'warn'}">${maiorP.toFixed(0)}%</div><div class="metric-delta ${maiorP>30?'down':''}">${maior.nome}</div></div>`;
+
+  let alertas = '';
+  if (maiorP > 30) alertas += `<div class="alert alert-red"><span class="alert-icon">⚠</span><span>${maior.nome} representa ${maiorP.toFixed(0)}% da receita — risco de concentração.</span></div>`;
+  const crescendo = d.seguradoras.filter(s=>s.val>s.ant).length;
+  if (crescendo > 0) alertas += `<div class="alert alert-green"><span class="alert-icon">↑</span><span>${crescendo} seguradora(s) com comissão crescendo vs mês anterior.</span></div>`;
+  document.getElementById('rec-alertas').innerHTML = alertas;
+
+  const maxVal = Math.max(...d.seguradoras.map(s=>s.val));
+  let barsHtml = '';
+  d.seguradoras.forEach(s => {
+    const p = pctNum(s.val, total);
+    const w = (s.val/maxVal*100).toFixed(1);
+    const shade = p > 25 ? '#00c98d' : p > 15 ? '#4dd9a8' : '#9FE1CB';
+    barsHtml += `<div class="bar-row">
+      <span class="bar-nome">${s.nome}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${w}%;background:${shade};"></div></div>
+      <span class="bar-pct" style="color:${shade};">${p.toFixed(1)}%</span>
+      <span class="bar-val">${fmt(s.val)}</span>
+    </div>`;
+  });
+  document.getElementById('rec-bars').innerHTML = barsHtml;
+  document.getElementById('rec-total').textContent = fmt(total);
+
+  let varHtml = '';
+  [...d.seguradoras].sort((a,b)=>(b.val-b.ant)-(a.val-a.ant)).forEach(s => {
+    const delta = s.val - s.ant;
+    const dp = (delta/s.ant*100);
+    const cor = delta>=0 ? 'var(--green)' : 'var(--red)';
+    const sinal = delta>=0 ? '+' : '';
+    varHtml += `<div class="tx-row">
+      <div><div class="tx-desc">${s.nome}</div><div class="tx-meta">${fmt(s.ant)} → ${fmt(s.val)}</div></div>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:${cor};">${sinal}${dp.toFixed(1)}%</span>
+    </div>`;
+  });
+  document.getElementById('rec-variacao').innerHTML = varHtml;
+}
+
+// ══════════ DESPESAS ══════════
+function renderDespesas(mes) {
+  const d = dados[mes];
+  const total = d.despesas.reduce((s,i)=>s+i.val,0);
+  const margem = d.receita - total;
+  const margemPct = pctNum(margem,d.receita);
+
+  document.getElementById('desp-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total saídas</div><div class="metric-val down">${fmt(total)}</div><div class="metric-delta down">${pct(total,d.receita)} da receita</div></div>
+    <div class="metric"><div class="metric-label">Pró-labore</div><div class="metric-val" style="color:var(--purple);">${fmt(d.prolabore)}</div><div class="metric-delta" style="color:var(--purple);">${pct(d.prolabore,d.receita)} da receita</div></div>
+    <div class="metric"><div class="metric-label">Margem líquida</div><div class="metric-val up">${fmt(margem)}</div><div class="metric-delta up">${margemPct.toFixed(1)}%</div></div>`;
+
+  renderBars(d.despesas, d.receita, 'desp-bars');
+
+  document.getElementById('desp-resultado').innerHTML = `
+    <div class="result-row"><span class="result-label">Total despesas</span><span class="result-val down">${fmt(total)}</span></div>
+    <div class="result-row"><span class="result-label">Margem líquida</span><span class="result-val up">${fmt(margem)}</span></div>`;
+
+  let txHtml = '';
+  d.txsEmpresa.forEach(tx => {
+    let valEl, catEl = `<div class="tx-meta">${tx.cat}</div>`;
+    if (tx.tipo==='in') valEl = `<span class="tx-in">+ ${fmt(tx.val)}</span>`;
+    else if (tx.tipo==='out') valEl = `<span class="tx-out">− ${fmt(tx.val)}</span>`;
+    else if (tx.tipo==='prolabore') { valEl = `<span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--purple);">− ${fmt(tx.val)}</span>`; catEl = `<div class="tx-meta" style="color:var(--purple);">Pró-labore · PIX seu nome</div>`; }
+    else valEl = `<span class="tx-pending">? ${fmt(tx.val)}</span>`;
+    txHtml += `<div class="tx-row"><div><div class="tx-desc">${tx.desc}</div>${catEl}</div>${valEl}</div>`;
+  });
+  document.getElementById('desp-txs').innerHTML = txHtml;
+}
+
+// ══════════ PESSOAL ══════════
+function renderPessoal(mes) {
+  const d = dados[mes];
+  const total = d.pessoal.reduce((s,i)=>s+i.val,0);
+  const sobra = d.pessoalRenda - total;
+  const delivComp = (d.pessoal.find(i=>i.nome==='Delivery')?.val||0) + (d.pessoal.find(i=>i.nome==='Compras online')?.val||0);
+
+  document.getElementById('pes-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Renda disponível</div><div class="metric-val blur-val">${fmt(d.pessoalRenda)}</div><div class="blur-hint">passe o mouse</div></div>
+    <div class="metric"><div class="metric-label">Total gasto</div><div class="metric-val">${fmt(total)}</div><div class="metric-delta down">${pct(total,d.pessoalRenda)} da renda</div></div>
+    <div class="metric"><div class="metric-label">Sobra</div><div class="metric-val ${sobra>=0?'up':'down'} blur-val">${fmt(sobra)}</div><div class="blur-hint">passe o mouse</div></div>`;
+
+  let alertas = '';
+  const delivPct = pctNum(delivComp, d.pessoalRenda);
+  if (delivPct > 20) alertas += `<div class="alert alert-red"><span class="alert-icon">⚠</span><span>Delivery + compras online = ${delivPct.toFixed(0)}% da renda — acima do ideal.</span></div>`;
+  else if (delivPct > 15) alertas += `<div class="alert alert-amber"><span class="alert-icon">◎</span><span>Delivery + compras online = ${delivPct.toFixed(0)}% da renda — monitorar.</span></div>`;
+  document.getElementById('pes-alertas').innerHTML = alertas;
+
+  renderBars(d.pessoal, d.pessoalRenda, 'pes-bars');
+
+  document.getElementById('pes-resultado').innerHTML = `
+    <div class="result-row"><span class="result-label">Total gasto</span><span class="result-val">${fmt(total)}</span></div>
+    <div class="result-row"><span class="result-label">Sobra</span><span class="result-val ${sobra>=0?'up':'down'}">${sobra>=0?'+':''}${fmt(sobra)}</span></div>`;
+
+  let txHtml = '';
+  d.txsPessoal.forEach(tx => {
+    let valEl;
+    if (tx.tipo==='out') valEl = `<span class="tx-out">− ${fmt(tx.val)}</span>`;
+    else valEl = `<span class="tx-pending">? ${fmt(tx.val)}</span>`;
+    txHtml += `<div class="tx-row"><div><div class="tx-desc">${tx.desc}</div><div class="tx-meta">${tx.cat}</div></div>${valEl}</div>`;
+  });
+  document.getElementById('pes-txs').innerHTML = txHtml;
+}
+
+// ══════════ CATEGORIAS ══════════
+const categorias = {
+  empRec: [{ nome:'Comissão seguradora', cor:'#00c98d', regra:'Porto Seguro, Bradesco, SulAmérica...', ia:true }],
+  empDesp: [
+    { nome:'Impostos',          cor:'#ff5757', regra:'DARF, Simples Nacional',    ia:true },
+    { nome:'Repasse parceiros', cor:'#ff5757', regra:'Repasse, Parceiro',          ia:true },
+    { nome:'Repasse vendedor',  cor:'#f5a623', regra:'Comissão vendedor',          ia:true },
+    { nome:'Pró-labore',        cor:'#a78bfa', regra:'PIX para seu nome',          ia:true, special:true },
+    { nome:'Contabilidade',     cor:'#8a8f9e', regra:'Honorários, Contabilidade',  ia:true },
+    { nome:'Seguros',           cor:'#8a8f9e', regra:'SICOOB SEG, Seguro',         ia:false, rules:2 },
+    { nome:'Plano de telefone', cor:'#8a8f9e', regra:'Claro, Vivo, TIM, celular',  ia:true },
+  ],
+  pes: [
+    { nome:'Moradia',        cor:'#ff5757', regra:'Aluguel, condomínio',         ia:true },
+    { nome:'Supermercado',   cor:'#f5a623', regra:'Carrefour, Extra, Mercado',   ia:true },
+    { nome:'Delivery',       cor:'#f5a623', regra:'iFood, Rappi, Uber Eats',     ia:true, meta:'10%' },
+    { nome:'Compras online', cor:'#f5a623', regra:'Amazon, Shopee, Mercado Livre',ia:true },
+    { nome:'Transporte',     cor:'#8a8f9e', regra:'Posto, combustível, Uber',    ia:true },
+    { nome:'Saúde',          cor:'#8a8f9e', regra:'Farmácia, plano de saúde',    ia:true },
+    { nome:'Assinaturas',    cor:'#8a8f9e', regra:'Netflix, Spotify, recorrente', ia:true },
+  ],
+};
+
+function renderCatList(lista, containerId) {
+  let html = '';
+  lista.forEach((c,i) => {
+    const badge = c.special
+      ? `<span class="badge b-pro">automático · pix</span>`
+      : c.ia ? `<span class="badge b-ok">IA ativa</span>` : `<span class="badge b-warn">${c.rules} regras</span>`;
+    const metaBadge = c.meta ? `<span class="badge b-warn">meta ${c.meta}</span>` : '';
+    html += `<div class="cat-row">
+      <div class="cat-nome">
+        <span class="cat-pill" style="background:${c.cor};"></span>
+        <div>
+          <div>${c.nome}</div>
+          <div class="cat-rule">${c.regra}</div>
+        </div>
+      </div>
+      <div class="cat-actions">${metaBadge}${badge}<button class="btn-xs" onclick="editarCat(${i},'${containerId}')">Editar</button></div>
+    </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function renderCategorias() {
+  renderCatList(categorias.empRec, 'list-cat-emp-rec');
+  renderCatList(categorias.empDesp, 'list-cat-emp-desp');
+  renderCatList(categorias.pes, 'list-cat-pes');
+}
+
+function toggleAddCat() {
+  document.getElementById('add-cat-form').classList.toggle('show');
+}
+
+function adicionarCategoria() {
+  const nome = document.getElementById('new-cat-nome').value.trim();
+  const tipo = document.getElementById('new-cat-tipo').value;
+  const regra = document.getElementById('new-cat-regra').value.trim();
+  if (!nome) return;
+  const nova = { nome, cor:'#4d9fff', regra: regra||'Sem regra', ia:true };
+  if (tipo==='empresa-rec') categorias.empRec.push(nova);
+  else if (tipo==='empresa-desp') categorias.empDesp.push(nova);
+  else categorias.pes.push(nova);
+  renderCategorias();
+  document.getElementById('new-cat-nome').value='';
+  document.getElementById('new-cat-regra').value='';
+  toggleAddCat();
+}
+
+function editarCat(i, containerId) {
+  alert('Editar categoria — nesta demo, edição completa disponível na versão real do app.');
+}
+
+function switchCatTab(btn, showId) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['cat-emp','cat-pes'].forEach(id=>{
+    document.getElementById(id).style.display = id===showId ? 'block' : 'none';
+  });
+}
+
+// ══════════ UPLOAD SIMULADO ══════════
+function processarUpload(input) {
+  if (!input.files[0]) return;
+  const nome = input.files[0].name;
+  const zone = document.querySelector('.upload-zone');
+  const proc = document.getElementById('upload-proc');
+  const result = document.getElementById('upload-result');
+
+  zone.style.display = 'none';
+  proc.style.display = 'flex';
+  result.style.display = 'none';
+
+  const msgs = [
+    'Lendo arquivo e detectando formato...',
+    'Identificando conta (Sicoob/BTG)...',
+    'Verificando duplicatas...',
+    'Classificando transações com IA...',
+    'Detectando pró-labore (PIX para seu nome)...',
+    'Finalizando importação...',
+  ];
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < msgs.length) {
+      document.getElementById('proc-msg').textContent = msgs[i++];
+    } else {
+      clearInterval(interval);
+      proc.style.display = 'none';
+      const banco = nome.toLowerCase().includes('sicoob') ? 'empresa (Sicoob)' : 'pessoal (BTG)';
+      const txs = Math.floor(Math.random()*150)+80;
+      const dups = Math.floor(Math.random()*5);
+      const pend = Math.floor(Math.random()*4)+1;
+      document.getElementById('upload-result-msg').textContent =
+        `✓ ${nome} importado · ${txs} transações · ${dups} duplicatas ignoradas · ${pend} pendentes de classificação · conta ${banco}`;
+      result.style.display = 'flex';
+      zone.style.display = 'block';
+      input.value = '';
+    }
+  }, 600);
+}
+
+function confirmarClassificacao(btn, cat) {
+  const row = btn.closest('.tx-row');
+  row.style.opacity = '0';
+  row.style.transition = 'opacity .3s';
+  setTimeout(() => row.remove(), 300);
+}
+
+// ══════════ NAVEGAÇÃO ══════════
+function go(id, el) {
+  document.querySelectorAll('.tela').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  document.getElementById('tela-'+id).classList.add('on');
+  el.classList.add('on');
+  const mes = mesAtual;
+  if (id==='visao-geral') renderVG(mes);
+  else if (id==='receita') renderReceita(mes);
+  else if (id==='despesas') renderDespesas(mes);
+  else if (id==='pessoal') renderPessoal(mes);
+  else if (id==='categorias') renderCategorias();
+}
+
+function setMesGlobal(mes, btn) {
+  mesAtual = mes;
+  document.querySelectorAll('#tela-visao-geral .mtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderVG(mes);
+}
+function setMesReceita(mes, btn) {
+  mesAtual = mes;
+  document.querySelectorAll('#tela-receita .mtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderReceita(mes);
+}
+function setMesDespesa(mes, btn) {
+  mesAtual = mes;
+  document.querySelectorAll('#tela-despesas .mtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderDespesas(mes);
+}
+function setMesPessoal(mes, btn) {
+  mesAtual = mes;
+  document.querySelectorAll('#tela-pessoal .mtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderPessoal(mes);
+}
+
+function simularSync() {
+  const icon = document.getElementById('sync-icon');
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin .7s linear infinite';
+  setTimeout(() => { icon.style.animation = ''; icon.textContent = '✓'; setTimeout(()=>icon.textContent='↻',1500); }, 1800);
+}
+
+// ══════════ INIT ══════════
+renderVG('mai');
+renderCategorias();
+</script>
+</body>
+</html>
